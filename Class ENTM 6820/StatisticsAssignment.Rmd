@@ -1,0 +1,51 @@
+---
+title: "Statistics Assignment"
+author: "Jordan Melson"
+date: "2023-04-04"
+output: html_document
+---
+### Question 1 (20 pts)
+Please describe the data you are using for your project in a couple sentences. What type of data is
+it and what does it look like? What are the objectives and hypotheses of your project? How do
+you plan to test this hypothesis (what types of statistics)?
+
+The data for this project is 8 weeks worth of crape myrtle bark scale population counts from crape myrtles in the greenhouse. Adult and Crawler counts were taken weekly over 2 months on 36 trees with 6 different treatments. All data are physical, in-situ counts, taken by hand. The goal of the experiment was to determine if limonene, a botanical, had similar or better control of CMBS than common chemical insecticides including pyriproxifen, dinotefuran, and imidacloprid, as well as a water treatment and a non-treated control. Based on previous unpublished data, we hypothesize that limonene will meet or exceed our expectations. We plan to run the data as a generalized linear mixed model to account for repeated measures by including the individual tree as a random variable. This takes into account the variance in the number of CMBS from one tree to the next, and removes that variance from the variance attributed to the fixed effects of treatment and time.
+### Question 2 (15 pts)
+Write the code to test your hypotheses and achieve the objectives in question 1.
+```{r}
+library(tidyverse)
+library(lme4)
+library(emmeans)
+library(multcomp)
+
+LimoR <- read.csv('LimoR.csv')
+
+lm(Total~Trt*as.factor(Date), data = LimoR)
+summary(Total~Trt, data = LimoR)
+
+anova(lm(Total~Trt, data = LimoR))
+
+lm.trt <- lm(Total ~ Trt, data = LimoR)
+summary(lm.trt)
+
+lsmeans <- emmeans(lm.trt, ~Trt)
+Results_lsmeans <- multcomp::cld(lsmeans, alpha = 0.05, reversed = TRUE, details = TRUE)
+Results_lsmeans
+```
+
+###Question 3 (15 pts)
+Interpret your results. What do the results of your code mean, and how do you plan to show this
+in figures or table form?
+
+Limonene is not significantly different from dinotefuran or water but is the only of those treatments that is significantly different from the other treatments.
+```{r}
+library(ggplot2)
+
+ggplot(LimoR, aes(x = Date, y = Total, group = Trt, color = Trt)) +
+  stat_summary(geom ="line")
+
+ggplot(LimoR, aes(x = Date, y = Total, group = Trt, color = Trt)) +
+  geom_smooth(method = lm, se = FALSE)+
+  geom_point()
+
+```
